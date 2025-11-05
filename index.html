@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>-= EnCrypto =-</title>
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2306b6d4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='11' width='18' height='11' rx='2' ry='2'%3E%3C/rect%3E%3Cpath d='M7 11V7a5 5 0 0 1 10 0v4'%3E%3C/path%3E%3C/svg%3E">
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* bg-gray-900 */
+        }
+        .main-container {
+            max-width: 1200px;
+            background-color: #1f2937; /* bg-gray-800 */
+        }
+        textarea {
+            resize: none;
+        }
+        .drag-over {
+            border-color: #06b6d4 !important; /* border-cyan-500 */
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
+        }
+        #password-strength-bar-inner {
+            transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+        }
+        select#algorithm {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.2em;
+            padding-right: 2.5rem;
+        }
+        select#algorithm option {
+            background: #374151; /* bg-gray-700 */
+            color: #d1d5db; /* text-gray-300 */
+        }
+        .tooltip-container.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+.site-footer {
+  position: relative;
+  overflow: hidden;
+  /* fără border, fără background */
+  backdrop-filter: blur(0); /* opțional: scoate blur-ul */
+}
+
+.badge {
+  display:inline-flex; align-items:center; gap:.5rem;
+  padding:.4rem .7rem; border-radius:9999px;
+  background: rgba(6,182,212,.08); border:1px solid rgba(6,182,212,.25);
+  font-size:.75rem; color:#a5f3fc;
+}
+
+.link { color:#9ca3af; transition: color .2s ease; }
+.link:hover { color:#22d3ee; }
+    </style>
+</head>
+
+<body class="text-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <!-- Main Application Container -->
+    <div class="main-container w-full rounded-2xl shadow-2xl p-6 md:p-8 space-y-6 relative">
+        
+        <!-- Header Section -->
+        <header class="text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-cyan-400">-= EnCrypto =-</h1>
+            <p class="text-gray-400 mt-2">Aplicație de criptare locală – rapidă și sigură, direct în browser</p>
+			
+			
+        </header>
+
+        <!-- Controls Section -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Operation: Encrypt/Decrypt -->
+            <div class="flex flex-col">
+                <label class="mb-2 font-semibold text-gray-300">Operațiune</label>
+                <div class="flex bg-gray-700 rounded-lg p-1">
+                    <button id="op-encrypt" class="flex-1 p-2 rounded-md text-sm font-medium bg-cyan-500 text-white shadow">
+                        <i class="fas fa-lock mr-2"></i>Criptare
+                    </button>
+                    <button id="op-decrypt" class="flex-1 p-2 rounded-md text-sm font-medium text-gray-300">
+                         <i class="fas fa-key mr-2"></i>Decriptare
+                    </button>
+                </div>
+            </div>
+
+            <!-- Algorithm: AES/RSA -->
+            <div class="flex flex-col">
+                <label for="algorithm" class="mb-2 font-semibold text-gray-300">Algoritm</label>
+                <select id="algorithm" class="w-full p-2.5 bg-gray-700 border border-gray-600 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 transition-colors">
+                    <option value="aes" selected>AES-GCM (Parolă)</option>
+                    <option value="rsa">RSA-OAEP (Pereche chei)</option>
+                </select>
+            </div>
+
+            <!-- Key Input Area -->
+            <div id="key-input-area" class="flex flex-col">
+                <!-- AES Password Input -->
+                <div id="aes-key-section">
+                    <label for="aes-password" class="mb-2 font-semibold text-gray-300">Parolă / Cheie secretă</label>
+                    <input type="password" id="aes-password" placeholder="Introdu parola secretă" class="w-full p-2.5 bg-gray-700 border border-gray-600 rounded-lg focus:ring-cyan-500 focus:border-cyan-500">
+                    <div class="mt-2">
+                        <div id="password-strength-bar" class="w-full bg-gray-700 rounded-full h-2">
+                            <div id="password-strength-bar-inner" class="h-2 rounded-full" style="width: 0%;"></div>
+                        </div>
+                        <p id="password-strength-text" class="text-xs text-gray-400 mt-1 text-right"></p>
+                    </div>
+                </div>
+                <!-- RSA Key Management (Initially Hidden) -->
+                <div id="rsa-key-section" class="hidden">
+                     <label class="mb-2 font-semibold text-gray-300">Administrare chei</label>
+                     <button id="generate-rsa-keys" class="w-full p-2.5 bg-indigo-600/90 hover:bg-indigo-700/90 rounded-lg text-sm font-medium">
+                        <i class="fas fa-shield-halved mr-2"></i>Generare chei RSA noi
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Text Areas Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Input -->
+            <div class="flex flex-col space-y-2">
+                <div class="flex justify-between items-center">
+                    <label for="input-text" class="font-semibold text-gray-300">Intrare</label>
+                    <div class="flex items-center space-x-2">
+                        <div class="relative group">
+                            <button id="paste-input" class="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md transition-all duration-200 hover:scale-110 hover:text-cyan-400"><i class="fas fa-paste"></i></button>
+                            <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 text-xs text-white bg-gray-900/80 backdrop-blur-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Lipire</span>
+                        </div>
+                        <div class="relative group">
+                             <button id="upload-file" class="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md transition-all duration-200 hover:scale-110 hover:text-cyan-400"><i class="fas fa-upload"></i></button>
+                             <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 text-xs text-white bg-gray-900/80 backdrop-blur-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Încărcare fișier</span>
+                        </div>
+                        <div class="relative group">
+                            <button id="clear-input" class="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md transition-all duration-200 hover:scale-110 hover:text-cyan-400"><i class="fas fa-times"></i></button>
+                             <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 text-xs text-white bg-gray-900/80 backdrop-blur-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Curățare intrare</span>
+                        </div>
+                        <input type="file" id="file-input" class="hidden"/>
+                    </div>
+                </div>
+                <textarea id="input-text" rows="10" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-cyan-500 focus:border-cyan-500" placeholder="Tastați, lipiți sau trageți &amp; plasați un fișier aici..."></textarea>
+            </div>
+
+            <!-- Output -->
+            <div class="flex flex-col space-y-2">
+                <div class="flex justify-between items-center">
+                     <label for="output-text" class="font-semibold text-gray-300">Ieșire</label>
+                    <div class="flex items-center space-x-2">
+                        <div class="relative group">
+                            <button id="copy-output" class="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md transition-all duration-200 hover:scale-110 hover:text-cyan-400"><i class="fas fa-copy"></i></button>
+                             <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 text-xs text-white bg-gray-900/80 backdrop-blur-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Copiere</span>
+                        </div>
+                        <div class="relative group">
+                            <button id="download-output" class="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md transition-all duration-200 hover:scale-110 hover:text-cyan-400"><i class="fas fa-download"></i></button>
+                             <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 text-xs text-white bg-gray-900/80 backdrop-blur-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Descărcare</span>
+                        </div>
+                        <div class="relative group">
+                            <button id="clear-output" class="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md transition-all duration-200 hover:scale-110 hover:text-cyan-400"><i class="fas fa-times"></i></button>
+                             <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 text-xs text-white bg-gray-900/80 backdrop-blur-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Curățăre rezultate</span>
+                        </div>
+                    </div>
+                </div>
+                <textarea id="output-text" rows="10" readonly class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg cursor-not-allowed" placeholder="Rezultatul va apărea aici..."></textarea>
+            </div>
+        </div>
+        
+        <!-- RSA Key Display Area (Initially Hidden) -->
+        <div id="rsa-keys-display" class="hidden pt-4">
+            <div class="bg-gray-900/50 p-6 rounded-xl">
+                 <h2 class="text-xl font-semibold text-center text-gray-300 mb-6">Pereche chei RSA</h2>
+                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="flex flex-col space-y-2">
+                         <div class="flex justify-between items-center">
+                            <label for="public-key" class="font-semibold text-gray-300">Cheie publică (pentru criptare)</label>
+                            <div class="flex items-center space-x-2">
+                                <div class="relative group">
+                                    <button id="import-public-key" class="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md transition-all duration-200 hover:scale-110 hover:text-cyan-400"><i class="fas fa-file-import"></i></button>
+                                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 text-xs text-white bg-gray-900/80 backdrop-blur-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Importă cheia publică</span>
+                                </div>
+                                <div class="relative group">
+                                    <button id="export-public-key" class="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md transition-all duration-200 hover:scale-110 hover:text-cyan-400"><i class="fas fa-file-export"></i></button>
+                                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 text-xs text-white bg-gray-900/80 backdrop-blur-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Exportă cheia publică</span>
+                                </div>
+                                <input type="file" id="public-key-input" class="hidden" accept=".json, .txt"/>
+                            </div>
+                        </div>
+                        <textarea id="public-key" rows="6" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg" placeholder="Cheia publică generată..."></textarea>
+                    </div>
+                    <div class="flex flex-col space-y-2">
+                         <div class="flex justify-between items-center">
+                            <label for="private-key" class="font-semibold text-gray-300">Cheie privată (păstreaz-o în siguranță!)</label>
+                             <div class="flex items-center space-x-2">
+                                 <div class="relative group">
+                                    <button id="import-private-key" class="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md transition-all duration-200 hover:scale-110 hover:text-cyan-400"><i class="fas fa-file-import"></i></button>
+                                     <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 text-xs text-white bg-gray-900/80 backdrop-blur-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Importă cheia privată</span>
+                                </div>
+                                <div class="relative group">
+                                    <button id="export-private-key" class="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md transition-all duration-200 hover:scale-110 hover:text-cyan-400"><i class="fas fa-file-export"></i></button>
+                                     <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 text-xs text-white bg-gray-900/80 backdrop-blur-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Exportă cheia privată</span>
+                                </div>
+                                 <input type="file" id="private-key-input" class="hidden" accept=".json, .txt"/>
+                            </div>
+                        </div>
+                        <textarea id="private-key" rows="6" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg" placeholder="Cheia privată generată..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- App Footer Bar -->
+        <footer class="flex items-center justify-between gap-4 pt-6 mt-4 border-t border-gray-700/50">
+            <!-- Warning Info (Left) -->
+            <div class="group relative">
+                <i id="warning-icon" class="fas fa-exclamation-triangle text-gray-500 hover:text-yellow-400 transition-colors text-2xl cursor-pointer"></i>
+                <div id="warning-tooltip" class="tooltip-container fixed bottom-4 left-4 right-4 w-auto md:absolute md:bottom-full md:left-0 md:right-auto md:w-72 mb-0 md:mb-3 invisible opacity-0 translate-y-4 transition-all duration-300 ease-out z-50">
+                    <div class="relative p-4 bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md rounded-2xl border border-white/10 shadow-[0_0_30px_rgba(250,204,21,0.15)]">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="flex items-center justify-center w-8 h-8 rounded-full bg-yellow-500/20">
+                               <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                            </div>
+                            <h3 class="text-sm font-semibold text-yellow-400">Avertismente importante</h3>
+                        </div>
+                        <ul class="list-disc list-inside text-gray-300 space-y-1 text-sm">
+                            <li><strong>Nu pierdeți niciodată parola sau cheia privată.</strong> Nu pot fi recuperate.</li>
+                            <li>Acest instrument rulează integral în browserul dvs. Nu se trimite nimic în afara dispozitivului dvs.</li>
+                            <li>Pentru informații sensibile, folosiți mereu o parolă puternică și unică.</li>
+                        </ul>
+                        <div class="absolute -bottom-1.5 left-6 -translate-x-1/2 w-3 h-3 bg-gradient-to-br from-gray-900/95 to-gray-800/95 rotate-45 border-r border-b border-white/10 hidden md:block"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons (Center) -->
+            <div class="flex items-center justify-center gap-2 sm:gap-4 flex-grow">
+                <button id="process-btn" class="flex-grow sm:flex-grow-0 px-4 sm:px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg text-base font-bold shadow-lg transition-transform transform hover:scale-105">
+                    <i class="fas fa-bolt mr-2"></i> Procesare
+                </button>
+                 <button id="clear-btn" class="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm font-medium">
+                    <i class="fas fa-times"></i> <span class="hidden sm:inline-block ml-2">Ștergere totală</span>
+                </button>
+            </div>
+
+            <!-- Algorithm Info (Right) -->
+            <div class="group relative">
+                <i id="algo-icon" class="fas fa-question-circle text-gray-500 hover:text-cyan-400 transition-colors text-2xl cursor-pointer"></i>
+                <div id="algo-tooltip" class="tooltip-container fixed bottom-4 left-4 right-4 w-auto md:absolute md:bottom-full md:right-0 md:left-auto md:w-72 mb-0 md:mb-3 invisible opacity-0 translate-y-4 transition-all duration-300 ease-out z-50">
+                    <div class="relative p-4 bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md rounded-2xl border border-white/10 shadow-[0_0_30px_rgba(79,70,229,0.15)]">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-500/20">
+                                <i class="fas fa-info-circle text-indigo-400"></i>
+                            </div>
+                            <h3 class="text-sm font-semibold text-indigo-400">Informații despre algoritm</h3>
+                        </div>
+                        <div id="algo-tooltip-content" class="space-y-2">
+                            <!-- Content will be injected by JS -->
+                        </div>
+                        <div class="absolute -bottom-1.5 right-6 -translate-x-1/2 w-3 h-3 bg-gradient-to-br from-gray-900/95 to-gray-800/95 rotate-45 border-r border-b border-white/10 hidden md:block"></div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+
+    <footer class="site-footer mt-10">
+  <div class="max-w-6xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <span class="badge">
+        <i class="fas fa-shield-halved"></i>
+        EnCrypto • secure by design
+      </span>
+    </div>
+
+    <div class="text-center text-gray-400 order-last md:order-none">
+      © 2025 · <span class="text-cyan-300 font-semibold">Cogian Sergiu</span>
+    </div>
+
+    <div class="flex items-center justify-center gap-4">
+      <a href="https://github.com/neurici" target="_blank" rel="noopener" class="link" aria-label="GitHub">
+        <i class="fab fa-github fa-lg"></i>
+      </a>
+      <a href="mailto:neurici@gmail.com" class="link" aria-label="Email">
+        <i class="fas fa-envelope fa-lg"></i>
+      </a>
+    </div>
+  </div>
+</footer>
+
+    <!-- Main Application Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // =================================================================================
+            // I. GESTIONAREA STĂRII
+            // =================================================================================
+            let currentOperation = 'encrypt'; // 'encrypt' sau 'decrypt'
+            let currentAlgorithm = 'aes'; // 'aes' sau 'rsa'
+            let uploadedFile = null; // { name: string, data: ArrayBuffer }
+            let encryptedFileBlob = null; // Blob pentru fișier criptat
+            let decryptedFileBlob = null; // Blob pentru fișier decriptat
+            let rsaKeyPair = null; // { publicKey: CryptoKey, privateKey: CryptoKey }
+
+            // =================================================================================
+            // II. SELECTAREA ELEMENTELOR DOM
+            // =================================================================================
+            const opEncryptBtn = document.getElementById('op-encrypt');
+            const opDecryptBtn = document.getElementById('op-decrypt');
+            const algorithmSelect = document.getElementById('algorithm');
+            const processBtn = document.getElementById('process-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const inputText = document.getElementById('input-text');
+            const outputText = document.getElementById('output-text');
+            const aesKeySection = document.getElementById('aes-key-section');
+            const rsaKeySection = document.getElementById('rsa-key-section');
+            const aesPasswordInput = document.getElementById('aes-password');
+            const generateRsaKeysBtn = document.getElementById('generate-rsa-keys');
+            const rsaKeysDisplay = document.getElementById('rsa-keys-display');
+            const publicKeyTextarea = document.getElementById('public-key');
+            const privateKeyTextarea = document.getElementById('private-key');
+            const fileInput = document.getElementById('file-input');
+            const uploadFileBtn = document.getElementById('upload-file');
+            const copyOutputBtn = document.getElementById('copy-output');
+            const pasteInputBtn = document.getElementById('paste-input');
+            const downloadOutputBtn = document.getElementById('download-output');
+            const clearInputBtn = document.getElementById('clear-input');
+            const clearOutputBtn = document.getElementById('clear-output');
+            const passwordStrengthBarInner = document.getElementById('password-strength-bar-inner');
+            const passwordStrengthText = document.getElementById('password-strength-text');
+            const exportPublicKeyBtn = document.getElementById('export-public-key');
+            const exportPrivateKeyBtn = document.getElementById('export-private-key');
+            const importPublicKeyBtn = document.getElementById('import-public-key');
+            const importPrivateKeyBtn = document.getElementById('import-private-key');
+            const publicKeyFileInput = document.getElementById('public-key-input');
+            const privateKeyFileInput = document.getElementById('private-key-input');
+            const algoTooltipContent = document.getElementById('algo-tooltip-content');
+            const warningIcon = document.getElementById('warning-icon');
+            const algoIcon = document.getElementById('algo-icon');
+            const warningTooltip = document.getElementById('warning-tooltip');
+            const algoTooltip = document.getElementById('algo-tooltip');
+
+            // =================================================================================
+            // III. FUNCȚII AJUTĂTOARE
+            // =================================================================================
+            function arrayBufferToBase64(buffer) {
+                let binary = '';
+                const bytes = new Uint8Array(buffer);
+                for (let i = 0; i < bytes.byteLength; i++) {
+                    binary += String.fromCharCode(bytes[i]);
+                }
+                return window.btoa(binary);
+            }
+
+            function base64ToArrayBuffer(base64) {
+                const binary_string = window.atob(base64);
+                const bytes = new Uint8Array(binary_string.length);
+                for (let i = 0; i < binary_string.length; i++) {
+                    bytes[i] = binary_string.charCodeAt(i);
+                }
+                return bytes.buffer;
+            }
+
+            function showAlert(message) {
+                alert(message);
+            }
+
+            function downloadFile(filename, data) {
+                const blob = data instanceof Blob ? data : new Blob([data]);
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+            }
+
+            // =================================================================================
+            // IV. ACTUALIZĂRI UI
+            // =================================================================================
+            function updateOperationUI() {
+                if (currentOperation === 'encrypt') {
+                    opEncryptBtn.classList.add('bg-cyan-500', 'text-white', 'shadow');
+                    opEncryptBtn.classList.remove('text-gray-300');
+                    opDecryptBtn.classList.remove('bg-cyan-500', 'text-white', 'shadow');
+                    opDecryptBtn.classList.add('text-gray-300');
+                    processBtn.innerHTML = '<i class="fas fa-bolt mr-2"></i> Criptează';
+                } else {
+                    opDecryptBtn.classList.add('bg-cyan-500', 'text-white', 'shadow');
+                    opDecryptBtn.classList.remove('text-gray-300');
+                    opEncryptBtn.classList.remove('bg-cyan-500', 'text-white', 'shadow');
+                    opEncryptBtn.classList.add('text-gray-300');
+                    processBtn.innerHTML = '<i class="fas fa-key mr-2"></i> Decriptează';
+                }
+            }
+            
+            function updateAlgorithmUI() {
+                if (currentAlgorithm === 'aes') {
+                    aesKeySection.classList.remove('hidden');
+                    rsaKeySection.classList.add('hidden');
+                    rsaKeysDisplay.classList.add('hidden');
+                } else {
+                    aesKeySection.classList.add('hidden');
+                    rsaKeySection.classList.remove('hidden');
+                    if(publicKeyTextarea.value || privateKeyTextarea.value) {
+                         rsaKeysDisplay.classList.remove('hidden');
+                    }
+                }
+            }
+
+            function updateAlgoTooltip() {
+                const tooltips = {
+                    aes: `
+                        <h4 class="text-sm font-semibold text-white mb-1">AES-GCM (Simetric)</h4>
+                        <p class="text-sm text-gray-300">Rapid și sigur. Folosește o singură parolă pentru criptare și decriptare. Ideal pentru fișiere mari și fluxuri de date.</p>
+                    `,
+                    rsa: `
+                        <h4 class="text-sm font-semibold text-white mb-1">RSA-OAEP (Asimetric)</h4>
+                        <p class="text-sm text-gray-300">Folosește o pereche de chei: cheie publică pentru criptare și cheie privată pentru decriptare. Bun pentru comunicare sigură, dar mai lent și limitat la cantități mici de date.</p>
+                    `
+                };
+                algoTooltipContent.innerHTML = tooltips[currentAlgorithm];
+            }
+
+            function updatePasswordStrengthUI(password) {
+                let score = 0;
+                if (!password) {
+                    passwordStrengthBarInner.style.width = '0%';
+                    passwordStrengthText.textContent = '';
+                    return;
+                }
+                if (password.length > 8) score++;
+                if (password.length > 12) score++;
+                if (/[a-z]/.test(password)) score++;
+                if (/[A-Z]/.test(password)) score++;
+                if (/[0-9]/.test(password)) score++;
+                if (/[^A-Za-z0-9]/.test(password)) score++;
+
+                const strength = {
+                    0: { text: '', color: '' },
+                    1: { text: 'Foarte slabă', color: 'bg-red-500' },
+                    2: { text: 'Slabă', color: 'bg-red-500' },
+                    3: { text: 'OK', color: 'bg-yellow-500' },
+                    4: { text: 'Bună', color: 'bg-yellow-500' },
+                    5: { text: 'Puternică', color: 'bg-green-500' },
+                    6: { text: 'Foarte puternică', color: 'bg-green-500' },
+                };
+
+                const { text, color } = strength[score];
+                passwordStrengthBarInner.style.width = `${(score / 6) * 100}%`;
+                passwordStrengthBarInner.className = `h-2 rounded-full ${color}`;
+                passwordStrengthText.textContent = text;
+            }
+
+
+            // =================================================================================
+            // V. FUNCȚII CRIPTOGRAFICE
+            // =================================================================================
+            async function deriveKey(password, salt) {
+                const enc = new TextEncoder();
+                const keyMaterial = await window.crypto.subtle.importKey('raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveKey']);
+                return window.crypto.subtle.deriveKey(
+                    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+                    keyMaterial,
+                    { name: 'AES-GCM', length: 256 },
+                    true,
+                    ['encrypt', 'decrypt']
+                );
+            }
+
+            async function encryptAES(data, password) {
+                const salt = window.crypto.getRandomValues(new Uint8Array(16));
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                const key = await deriveKey(password, salt);
+                const encryptedData = await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, data);
+                
+                const combined = new Uint8Array(salt.length + iv.length + encryptedData.byteLength);
+                combined.set(salt, 0);
+                combined.set(iv, salt.length);
+                combined.set(new Uint8Array(encryptedData), salt.length + iv.length);
+                return combined.buffer;
+            }
+
+            async function decryptAES(encryptedData, password) {
+                try {
+                    const salt = encryptedData.slice(0, 16);
+                    const iv = encryptedData.slice(16, 28);
+                    const data = encryptedData.slice(28);
+                    const key = await deriveKey(password, salt);
+                    return await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+                } catch (error) {
+                    throw new Error("Decriptarea a eșuat. Verificați parola sau integritatea datelor.");
+                }
+            }
+
+            async function generateRsaKeyPair() {
+                return await window.crypto.subtle.generateKey(
+                    { name: 'RSA-OAEP', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' },
+                    true,
+                    ['encrypt', 'decrypt']
+                );
+            }
+
+            async function encryptRSA(data, publicKey) {
+                return await window.crypto.subtle.encrypt({ name: 'RSA-OAEP' }, publicKey, data);
+            }
+
+            async function decryptRSA(encryptedData, privateKey) {
+                 try {
+                    return await window.crypto.subtle.decrypt({ name: 'RSA-OAEP' }, privateKey, encryptedData);
+                } catch (error) {
+                    throw new Error("Decriptarea a eșuat. Verificați cheia privată sau integritatea datelor.");
+                }
+            }
+
+            // =================================================================================
+            // VI. LISTENERE EVENIMENTE
+            // =================================================================================
+            function swapIO() {
+                if (uploadedFile || decryptedFileBlob || encryptedFileBlob) {
+                    outputText.value = '';
+                    return;
+                }
+                const temp = inputText.value;
+                inputText.value = outputText.value;
+                outputText.value = temp;
+            }
+
+            opEncryptBtn.addEventListener('click', () => { 
+                if (currentOperation !== 'encrypt') {
+                    currentOperation = 'encrypt'; 
+                    updateOperationUI(); 
+                    swapIO();
+                }
+            });
+            opDecryptBtn.addEventListener('click', () => { 
+                if (currentOperation !== 'decrypt') {
+                    currentOperation = 'decrypt'; 
+                    updateOperationUI(); 
+                    swapIO();
+                }
+            });
+            
+            algorithmSelect.addEventListener('change', (e) => { currentAlgorithm = e.target.value; updateAlgorithmUI(); updateAlgoTooltip(); });
+            
+            clearBtn.addEventListener('click', () => {
+                inputText.value = ''; outputText.value = ''; aesPasswordInput.value = '';
+                publicKeyTextarea.value = ''; privateKeyTextarea.value = '';
+                rsaKeysDisplay.classList.add('hidden');
+                uploadedFile = null; rsaKeyPair = null; decryptedFileBlob = null; encryptedFileBlob = null;
+                updatePasswordStrengthUI('');
+            });
+            
+            processBtn.addEventListener('click', async () => {
+                let inputData;
+                const originalBtnContent = processBtn.innerHTML;
+                processBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Se procesează...';
+                processBtn.disabled = true;
+
+                try {
+                    if (uploadedFile) {
+                        inputData = uploadedFile.data;
+                    } else {
+                        if (!inputText.value) { showAlert("Câmpul de intrare este gol."); return; }
+                        inputData = (currentOperation === 'decrypt') ? base64ToArrayBuffer(inputText.value) : new TextEncoder().encode(inputText.value);
+                    }
+
+                    let result;
+                    if (currentAlgorithm === 'aes') {
+                        const password = aesPasswordInput.value;
+                        if (!password) { showAlert("Parola este necesară pentru AES."); return; }
+                        result = (currentOperation === 'encrypt') ? await encryptAES(inputData, password) : await decryptAES(inputData, password);
+                    } else {
+                        if (currentOperation === 'encrypt') {
+                             if (!publicKeyTextarea.value) { showAlert('Cheia publică este necesară.'); return; }
+                             const publicKey = await window.crypto.subtle.importKey('jwk', JSON.parse(publicKeyTextarea.value), { name: 'RSA-OAEP', hash: 'SHA-256' }, true, ['encrypt']);
+                             result = await encryptRSA(inputData, publicKey);
+                        } else {
+                             if (!privateKeyTextarea.value) { showAlert('Cheia privată este necesară.'); return; }
+                             const privateKey = await window.crypto.subtle.importKey('jwk', JSON.parse(privateKeyTextarea.value), { name: 'RSA-OAEP', hash: 'SHA-256' }, true, ['decrypt']);
+                             result = await decryptRSA(inputData, privateKey);
+                        }
+                    }
+
+                    decryptedFileBlob = null; 
+                    encryptedFileBlob = null; 
+
+                    if (currentOperation === 'encrypt') {
+                        if (uploadedFile) {
+                            encryptedFileBlob = new Blob([result]);
+                            outputText.value = `✅ Fișier criptat cu succes!\n\nApăsați butonul de descărcare pentru a-l salva.`;
+                        } else {
+                            outputText.value = arrayBufferToBase64(result);
+                        }
+                    } else {
+                        if (uploadedFile) {
+                            decryptedFileBlob = new Blob([result]);
+                            outputText.value = `✅ Fișier decriptat cu succes!\n\nApăsați butonul de descărcare pentru a-l salva.`;
+                        } else {
+                            outputText.value = new TextDecoder().decode(result);
+                        }
+                    }
+
+                } catch (error) {
+                    showAlert(error.message);
+                    outputText.value = '';
+                } finally {
+                    processBtn.innerHTML = originalBtnContent;
+                    processBtn.disabled = false;
+                }
+            });
+            
+            generateRsaKeysBtn.addEventListener('click', async () => {
+                const originalBtnContent = generateRsaKeysBtn.innerHTML;
+                generateRsaKeysBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Se generează...';
+                generateRsaKeysBtn.disabled = true;
+                try {
+                    rsaKeyPair = await generateRsaKeyPair();
+                    const publicKeyJwk = await window.crypto.subtle.exportKey('jwk', rsaKeyPair.publicKey);
+                    const privateKeyJwk = await window.crypto.subtle.exportKey('jwk', rsaKeyPair.privateKey);
+                    publicKeyTextarea.value = JSON.stringify(publicKeyJwk, null, 2);
+                    privateKeyTextarea.value = JSON.stringify(privateKeyJwk, null, 2);
+                    rsaKeysDisplay.classList.remove('hidden');
+                } catch (error) {
+                    showAlert('Generarea cheilor RSA a eșuat.');
+                } finally {
+                    generateRsaKeysBtn.innerHTML = originalBtnContent;
+                    generateRsaKeysBtn.disabled = false;
+                }
+            });
+
+            uploadFileBtn.addEventListener('click', () => fileInput.click());
+            const handleFile = (file) => {
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        uploadedFile = { name: file.name, data: event.target.result };
+                        inputText.value = `Fișier selectat: ${file.name} (${Math.round(file.size / 1024)} KB)`;
+                    };
+                    reader.readAsArrayBuffer(file);
+                }
+            };
+            fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+            inputText.addEventListener('dragover', (e) => { e.preventDefault(); inputText.classList.add('drag-over'); });
+            inputText.addEventListener('dragleave', () => inputText.classList.remove('drag-over'));
+            inputText.addEventListener('drop', (e) => { e.preventDefault(); inputText.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); });
+
+            copyOutputBtn.addEventListener('click', () => {
+                if (!outputText.value) return;
+                navigator.clipboard.writeText(outputText.value).then(() => {
+                    const originalSpan = copyOutputBtn.nextElementSibling;
+                    originalSpan.textContent = 'Copiat!';
+                    setTimeout(() => { originalSpan.textContent = 'Copiază'; }, 2000);
+                }).catch(() => showAlert('Nu s-a putut copia în clipboard.'));
+            });
+
+            pasteInputBtn.addEventListener('click', async () => {
+                try {
+                    inputText.value = await navigator.clipboard.readText();
+                } catch (err) {
+                     showAlert("Lipirea din clipboard a eșuat. Folosiți Ctrl+V sau Cmd+V pentru Mac.");
+                }
+            });
+
+            downloadOutputBtn.addEventListener('click', () => {
+                if (decryptedFileBlob) {
+                    const filename = uploadedFile.name.replace(/\.enc$/, '');
+                    downloadFile(filename, decryptedFileBlob);
+                } else if (encryptedFileBlob) {
+                    const filename = `${uploadedFile.name}.enc`;
+                    downloadFile(filename, encryptedFileBlob);
+                } else if (outputText.value) {
+                    const filename = currentOperation === 'encrypt' ? 'text-criptat.txt' : 'text-decriptat.txt';
+                    downloadFile(filename, new Blob([outputText.value], {type: "text/plain"}));
+                }
+            });
+
+            clearInputBtn.addEventListener('click', () => { inputText.value = ''; uploadedFile = null; });
+            clearOutputBtn.addEventListener('click', () => { outputText.value = ''; decryptedFileBlob = null; encryptedFileBlob = null; });
+            
+            aesPasswordInput.addEventListener('input', (e) => updatePasswordStrengthUI(e.target.value));
+
+            exportPublicKeyBtn.addEventListener('click', () => { if (publicKeyTextarea.value) downloadFile('cheie_publica.json', new Blob([publicKeyTextarea.value], {type: "application/json"})); });
+            exportPrivateKeyBtn.addEventListener('click', () => { if (privateKeyTextarea.value) downloadFile('cheie_privata.json', new Blob([privateKeyTextarea.value], {type: "application/json"})); });
+
+            importPublicKeyBtn.addEventListener('click', () => publicKeyFileInput.click());
+            importPrivateKeyBtn.addEventListener('click', () => privateKeyFileInput.click());
+            
+            const handleKeyFileImport = (file, keyType) => {
+                 if(file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                           const keyData = JSON.parse(event.target.result);
+                           const isValid = keyData.kty === 'RSA' && keyData.alg === 'RSA-OAEP-256' && (keyType === 'public' ? true : !!keyData.d);
+                           if(isValid) {
+                               const textarea = keyType === 'public' ? publicKeyTextarea : privateKeyTextarea;
+                               textarea.value = JSON.stringify(keyData, null, 2);
+                           } else {
+                               showAlert(`Format invalid pentru cheia ${keyType === 'public' ? 'publică' : 'privată'}.`);
+                           }
+                        } catch {
+                           showAlert('Nu am putut interpreta fișierul de cheie. Asigurăți-vă că este JSON valid.');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            publicKeyFileInput.addEventListener('change', (e) => handleKeyFileImport(e.target.files[0], 'public'));
+            privateKeyFileInput.addEventListener('change', (e) => handleKeyFileImport(e.target.files[0], 'private'));
+
+            // =================================================================================
+            // VII. INITIALIZARE
+            // =================================================================================
+            updateOperationUI();
+            updateAlgorithmUI();
+            updateAlgoTooltip();
+
+            const setupTooltip = (icon, tooltip) => {
+                const canHover = window.matchMedia('(hover: hover)').matches;
+
+                if (canHover) {
+                    icon.addEventListener('mouseenter', () => tooltip.classList.add('show'));
+                    icon.addEventListener('mouseleave', () => {
+                        if (tooltip.dataset.pinned !== 'true') {
+                            tooltip.classList.remove('show');
+                        }
+                    });
+                }
+
+                icon.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isPinned = tooltip.dataset.pinned === 'true';
+
+                    const otherTooltip = tooltip === warningTooltip ? algoTooltip : warningTooltip;
+                    otherTooltip.classList.remove('show');
+                    otherTooltip.dataset.pinned = 'false';
+
+                    if (isPinned) {
+                        tooltip.dataset.pinned = 'false';
+                        tooltip.classList.remove('show');
+                    } else {
+                        tooltip.dataset.pinned = 'true';
+                        tooltip.classList.add('show');
+                    }
+                });
+            };
+
+            setupTooltip(warningIcon, warningTooltip);
+            setupTooltip(algoIcon, algoTooltip);
+            
+            window.addEventListener('click', () => {
+                document.querySelectorAll('.tooltip-container').forEach(el => {
+                    el.classList.remove('show');
+                    el.dataset.pinned = 'false';
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>
