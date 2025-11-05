@@ -11,10 +11,7 @@
 ---
 
 ## 🖼️ Demo / Screenshot
-> *Adaugă o captură în repo și actualizează path-ul mai jos.*
-```
-/assets/screenshot.png
-```
+
 ![EnCrypto](assets/screenshot.png)
 
 ---
