@@ -112,8 +112,7 @@
 ### Stiluri utile (Tailwind + custom)
 ```css
 .site-footer { position: relative; overflow: hidden; backdrop-filter: blur(0); }
-.badge { display:inline-flex; align-items:center; gap:.5rem; padding:.4rem .7rem; border-radius:9999px;
-  background: rgba(6,182,212,.08); border:1px solid rgba(6,182,212,.25); font-size:.75rem; color:#a5f3fc; }
+.badge { display:inline-flex; align-items:center; gap:.5rem; padding:.4rem .7rem; border-radius:9999px; background: rgba(6,182,212,.08); border:1px solid rgba(6,182,212,.25); font-size:.75rem; color:#a5f3fc; }
 .link { color:#9ca3af; transition: color .2s ease; } .link:hover { color:#22d3ee; }
 ```
 
@@ -128,23 +127,7 @@
 
 ---
 
-## 🧩 Roadmap (idei)
-- [ ] Export/import configurări (salt/iv/parametri) ca profil  
-- [ ] „Hybrid crypto”: RSA pentru cheie + AES pentru payload mare  
-- [ ] Suport drag & drop multiplu + progres  
-- [ ] PWA (instalabil pe desktop/telefon)  
-- [ ] Localizare multi-lang (RO/EN toggle UI)
-
----
-
-## 🤝 Contribuții
-Orice PR e binevenit:
-1. Fork & clone
-2. Creează branch: `feat/nume-functie`
-3. Commit cu mesaje clare
-4. PR → descrie schimbările + capturi
-
-Stil:
+## 🎨 Stil:
 - păstrează UI curat, fără culori stridente
 - respectă structura evenimentelor și naming-ul actual
 
